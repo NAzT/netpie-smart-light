@@ -12,14 +12,16 @@ WiFiConnector *wifi;
 int state[2];
 boolean current_state;
 boolean _published_flag = false;
+uint32_t prev = millis();
 
-#define RELAY_01_PIN 16
+
+#define RELAY_01_PIN 2
 #define RELAY_01_MASK 0b0000001
 
 #define EEPROM_ADDR 0x00
 
 #define MQTT_PORT        1883
-#define PUBLISH_EVERY    10*1000 // every 15 seconds
+#define PUBLISH_EVERY    5*1000 // every 15 seconds
 
 /* comment ทิ้งถ้าไม่ส่ username/password */
 //#define MQTT_USERNAME "GaBH7sxFDUEX0hl"
@@ -33,7 +35,7 @@ boolean _published_flag = false;
 #define MQTT_PREFIX "/NatWeerawan/gearname"
 
 /* SENSOR INFO */
-#define DEVICE_NAME "ESPRESSO-SMART-LIGHT"
+#define DEVICE_NAME "ESP01-SMART-LIGHT"
 #define AUTHOR      "Nat Weerawan"
 #define BOARD       "ESP-01"
 #define SENSOR      "SSR"
@@ -48,7 +50,8 @@ boolean _published_flag = false;
 #include "_receive.h"
 #include "_publish.h"
 
-uint32_t prev = millis();
+
+String queue = "";
 
 void init_hardware()
 {
@@ -59,46 +62,6 @@ void init_hardware()
   Serial.println("BEGIN");
   pinMode(SWITCH_PIN, INPUT_PULLUP);
   pinMode(RELAY_01_PIN, OUTPUT);
-  //  auto cb_fn = []() -> void {
-  //    int _status = digitalRead(0);
-  //    state[_status] = millis();
-  //
-  //    Serial.print(" CHANGE => ");
-  //    Serial.println(_status);
-  //
-  //    if (_status == HIGH) {
-  //      int val = state[1] - state[0];
-  //      if (val > 50) {
-  //        Serial.println(val);
-  //        current_state = !current_state;
-  //        digitalWrite(RELAY_01_PIN, current_state);
-  //        if (current_state == true) {
-  //          Serial.println("STATE: ON");
-  //          EEPROM.write(EEPROM_ADDR, 'g');
-  ////          EEPROM.commit();
-  ////          mqtt->sync_pub(String("g"));
-  //        }
-  //        else {
-  //          Serial.println("STATE: OFF");
-  //          EEPROM.write(EEPROM_ADDR, 'h');
-  ////          EEPROM.commit();
-  ////          mqtt->sync_pub(String("h"));
-  //        }
-  //
-  //        //            detachInterrupt(0, cb_fn, CHANGE);
-  //
-  //
-  //        //    digitalWrite(RELAY_02_PIN, payload.charAt(i) & RELAY_02_MASK);
-  //
-  //      }
-  //
-  //    }
-  //  };
-  //
-  //  attachInterrupt(0, cb_fn, CHANGE);
-
-  //   digitalWrite(4, LOW);
-  //   digitalWrite(5, LOW);
 
   byte val = EEPROM.read(EEPROM_ADDR);
   Serial.println(val, BIN);
@@ -107,14 +70,6 @@ void init_hardware()
   Serial.print("START STATE: ");
   Serial.println(current_state);
 
-  Serial.print("START STATE: ");
-  Serial.println(current_state);
-
-  Serial.print("START STATE: ");
-  Serial.println(current_state);
-
-  Serial.print("START STATE: ");
-  Serial.println(current_state);
   digitalWrite(RELAY_01_PIN, current_state);
 
   //   digitalWrite(RELAY_02_PIN, val & RELAY_02_MASK);
@@ -129,26 +84,33 @@ void init_hardware()
 void setup()
 {
   init_hardware();
-  init_wifi();
-  init_mqtt();
+  wifi = init_wifi();
+  mqtt = init_mqtt();
+
+  wifi->connect();
 }
 
 void loop()
 {
-  mqtt->loop(wifi);
+  mqtt->loop();
   prev = millis();
+
   while (digitalRead(SWITCH_PIN) == LOW) {
-    if (millis() - prev > 50) {
+    mqtt->loop();
+    if (millis() - prev > 70) {
       prev = millis();
-      Serial.println("OK");
-      yield();
-      if (digitalRead(RELAY_01_PIN) == LOW) {
-        mqtt->sync_pub(String("g"));
+      if (current_state == 0) {
+        queue = "g";
+        digitalWrite(SWITCH_PIN, HIGH);
       }
       else {
-        mqtt->sync_pub(String("h"));
+        digitalWrite(SWITCH_PIN, LOW);
+        queue = "h";
       }
-
+      Serial.println(String("HEAP: ") + ESP.getFreeHeap());
+      mqtt->sync_pub(queue);
     }
+    yield();
   }
+
 }

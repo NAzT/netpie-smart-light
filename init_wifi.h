@@ -1,11 +1,11 @@
 
-void init_wifi()
+WiFiConnector* init_wifi()
 {
   // use flash memory ssid & smartconfig
   //wifi = new WiFiConnector();
   wifi = new WiFiConnector(WIFI_SSID, WIFI_PASSPHARSE);
 
-  wifi->setLed(16);
+  //  wifi->setLed(16);
   wifi->on_connecting([&](const void* message)
   {
     Serial.print("connecting -> ");
@@ -13,6 +13,12 @@ void init_wifi()
     Serial.println(wifi->get("ssid") + ", " + wifi->get("password"));
     // Serial.println ((char*)message);
     delay(500);
+    while (digitalRead(SWITCH_PIN) == LOW) {
+      if (millis() - prev > 70) {
+        digitalWrite(RELAY_01_PIN, !digitalRead(RELAY_01_PIN));
+      }
+      yield();
+    }
   });
 
   wifi->on_connected([&](const void* message)
@@ -21,6 +27,7 @@ void init_wifi()
     // Print the IP address
     Serial.println(WiFi.localIP());
     // Serial.println ((char*)message);
+    mqtt->connect();
 
   });
 
@@ -46,6 +53,5 @@ void init_wifi()
     // delay(500);
   });
 
-  wifi->connect();
-
+  return wifi;
 }

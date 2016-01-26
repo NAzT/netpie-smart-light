@@ -7,18 +7,19 @@ MqttConnector::prepare_data_hook_t on_prepare_data =
   info["author"] = AUTHOR;
   info["board"]  = BOARD;
   info["sensor"] = SENSOR;
+  info["status"] = current_state;
 };
 
 // MQTT INITIALIZER
-void init_mqtt()
+MqttConnector* init_mqtt()
 {
   mqtt = new MqttConnector(MQTT_HOST, MQTT_PORT);
   mqtt->prepare_configuration([&](MqttConnector::Config * config) -> void {
     config->clientId  = String(MQTT_CLIENT_ID);
     config->channelPrefix = String(MQTT_PREFIX);
     config->enableLastWill = true;
-    config->retainPublishMessage = true;
-    config->publishOnly = false;
+    config->retainPublishMessage = false;
+    config->mode = MqttConnector::MODE_BOTH;
 
     config->username = String(MQTT_USERNAME);
     config->password = String(MQTT_PASSWORD);
@@ -42,8 +43,7 @@ void init_mqtt()
     Serial.println(String(" PORT: ") + config.mqttPort);
     Serial.println(String("__PUBLICATION TOPIC .. ") + config.topicPub);
     Serial.println(String("__SUBSCRIPTION TOPIC .. ") + config.topicPub);
-    Serial.println(String("_PUBLISH ONLY ..") + config.publishOnly);
-    Serial.println(String("_SUBSCRIBE ONLY ..") + config.subscribeOnly);
+
   });
 
   mqtt->prepare_data(on_prepare_data, PUBLISH_EVERY);
@@ -72,5 +72,6 @@ void init_mqtt()
     }
   });
 
-  mqtt->connect();
+  return mqtt;
+
 }

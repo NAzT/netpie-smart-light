@@ -7,9 +7,6 @@ PubSubClient::callback_t on_message_arrived =
   Serial.println(payload.toInt());
 
   if (topic.lastIndexOf("/command") != -1) {
-
-
-
     for (int i = 0; i < payload.length(); i++) {
       current_state = payload.charAt(i) & RELAY_01_MASK;
       Serial.print("GOT PAYLOAD = ");
