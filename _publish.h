@@ -4,9 +4,16 @@ MqttConnector::prepare_data_hook_t on_prepare_data =
   JsonObject& info = (*root)["info"];
   data["myName"] = DEVICE_NAME;
 
+#ifdef AUTHOR
   info["author"] = AUTHOR;
+#endif
+#ifdef BOARD
   info["board"]  = BOARD;
+#endif
+#ifdef SENSOR
   info["sensor"] = SENSOR;
+#endif
+
   info["status"] = current_state;
 };
 
@@ -15,14 +22,20 @@ MqttConnector* init_mqtt()
 {
   mqtt = new MqttConnector(MQTT_HOST, MQTT_PORT);
   mqtt->prepare_configuration([&](MqttConnector::Config * config) -> void {
+#ifdef MQTT_CLIENT_ID
     config->clientId  = String(MQTT_CLIENT_ID);
+#endif
+#ifdef MQTT_PREFIX
     config->channelPrefix = String(MQTT_PREFIX);
+#endif
     config->enableLastWill = true;
     config->retainPublishMessage = false;
     config->mode = MqttConnector::MODE_BOTH;
 
+#if defined(MQTT_USERNAME) && defined(MQTT_PASSWORD)
     config->username = String(MQTT_USERNAME);
     config->password = String(MQTT_PASSWORD);
+#endif
 
     // uint8_t mac[6];
     // WiFi.macAddress(mac);

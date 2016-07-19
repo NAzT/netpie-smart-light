@@ -28,10 +28,10 @@ uint32_t prev = millis();
 //#define MQTT_PASSWORD "YHK/C+Q2D4Juz9iPuHCrJL3IJLU="
 //#define MQTT_CLIENT_ID "x6Xu0gY0nWyj4inu"
 
-#define MQTT_HOST "gb.netpie.io"
-#define MQTT_USERNAME "GaBH7sxFDUEX0hl"
-#define MQTT_PASSWORD "pv1ycZPfj4285/E9SJCrKBvk/nI="
-#define MQTT_CLIENT_ID "WlTwolbtXDaqQbWB"
+#define MQTT_HOST "cmmc.xyz"
+//#define MQTT_USERNAME "GaBH7sxFDUEX0hl"
+//#define MQTT_PASSWORD "pv1ycZPfj4285/E9SJCrKBvk/nI="
+//#define MQTT_CLIENT_ID "WlTwolbtXDaqQbWB"
 #define MQTT_PREFIX "/NatWeerawan/gearname"
 
 /* SENSOR INFO */
@@ -41,8 +41,8 @@ uint32_t prev = millis();
 #define SENSOR      "SSR"
 
 /* WIFI INFO */
-#define WIFI_SSID        ""
-#define WIFI_PASSPHARSE  ""
+#define WIFI_SSID        "@ESPertAP_001"
+#define WIFI_PASSPHARSE  "espertap"
 
 #define SWITCH_PIN 0
 
@@ -92,12 +92,13 @@ void setup()
 
 void loop()
 {
+  wifi->loop();
   mqtt->loop();
   prev = millis();
 
   while (digitalRead(SWITCH_PIN) == LOW) {
     mqtt->loop();
-    if (millis() - prev > 70) {
+    if (millis() - prev > 120) {
       prev = millis();
       if (current_state == 0) {
         queue = "g";
@@ -109,6 +110,7 @@ void loop()
       }
       Serial.println(String("HEAP: ") + ESP.getFreeHeap());
       mqtt->sync_pub(queue);
+      delay(100);
     }
     yield();
   }
